@@ -1,3 +1,4 @@
+from typing import List
 import numpy as np
 from copy import deepcopy
 
@@ -9,7 +10,15 @@ UNSURE_THRESHOLD = 0.11
 DIFFS_THRESHOLD = 0.01
 DISCARD_TWO_MAXES_ENABLED = False
 
-class ProbsVector():
+# UNIFORM_ENTROPY_TH = 0.85
+UNIFORM_ENTROPY_TH = 0
+UNIFORM_ENTROPY_TH_LEN_1 = 1.1
+NOISE_TH = 0.05
+
+class ProbsVectorType():
+    pass
+
+class ProbsVector(ProbsVectorType):
     ''' Making decisions based on probability vector
     Parameters:
         p (Float[]): Probabilities vector
@@ -22,13 +31,13 @@ class ProbsVector():
         template_names (Float[]) OR manage as .names
     '''
     def __init__(self,
-                p=np.array([]),
-                template_names=[],
-                match_threshold = MATCH_THRESHOLD, 
-                clear_threshold = CLEAR_THRESHOLD, 
-                unsure_threshold = UNSURE_THRESHOLD, 
-                diffs_threshold = DIFFS_THRESHOLD,
-                discard_two_maxes_enabled = DISCARD_TWO_MAXES_ENABLED,
+                p: np.ndarray = np.array([]),
+                template_names: List = [],
+                match_threshold: float = MATCH_THRESHOLD, 
+                clear_threshold: float = CLEAR_THRESHOLD, 
+                unsure_threshold: float = UNSURE_THRESHOLD, 
+                diffs_threshold: float = DIFFS_THRESHOLD,
+                discard_two_maxes_enabled: bool = DISCARD_TWO_MAXES_ENABLED,
                 ):
         # handle if probabilities not given
         if len(p) == 0: self.p = np.zeros(len(template_names))
@@ -51,7 +60,6 @@ class ProbsVector():
         self.p = np.array(self.p, dtype=float) # handle when input self.p is e.g., np.array(["1.0","0.5",...])
         assert isinstance(self.p, np.ndarray) and (len(self.p) == 0 or isinstance(self.p[0], float))
         
-        self.conclusion = None
         self.match_threshold = match_threshold
         self.clear_threshold = clear_threshold
         self.unsure_threshold = unsure_threshold
@@ -120,17 +128,15 @@ class ProbsVector():
         for i in range(len(neg)):
             s3 += f"{neg[i]} {negp.round(2)[i]}, "
 
-        return f"{cc.H}Clear: {cc.E} {s1}\n{cc.H}Unsure:{cc.E} {s2}\n{cc.H}Negative: {cc.E}{s3}\n-> {cc.B}{self.conclude()}{cc.E}"
+        return f"{cc.H}Clear: {cc.E} {s1}\n{cc.H}Unsure:{cc.E} {s2}\n{cc.H}Negative: {cc.E}{s3}\n-> THRESHOLDING RESULT: ({cc.B}{self.apply_thresholding()}){cc.E}"
 
     def discard_two_maxes(self):
+        """ Discovers if maximum likelihood is not unique. There are two likelihoods (or more) with max value. """
+        # e.g. 1.0      - [0.5, 1.0, 1.0] = [0.5, 0.0, 0.0]
         r = max(self.p) - self.p
+        # e.g. sum([0.5,0.5,0.0]==0) = 2
         if sum(r==0)>1:
-            # print(self.p)
-            # print(r)
-            # print(sum(r==0))
-            # print(self.names)
-            # input("??")
-            return True
+            return True # e.g. There are likelihood with similar max value
         return False
 
     @property
@@ -179,8 +185,6 @@ class ProbsVector():
         if len(self.p) == 0: return None
         if len(self.clear) > 0 and self.diffs_above_threshold():
             return self.max_id
-        #elif (len(self.unsure) > 0 and self.diffs_above_threshold()):
-        #    return self.unsure_id[0] 
 
     @property
     def activated(self):
@@ -210,15 +214,11 @@ class ProbsVector():
             None: Don't understand, ask again (NoneType)
         '''
         if self.activated is not None: # Is there single most probable items?
-            self.conclusion = 'use'
             return self.activated
         elif self.clear != []: # Is there more most probable items?
-            self.conclusion = 'ask choose'
             return self.clear
         else: # No probability above threshold, Ask again
-            self.conclusion = 'ask again'
             return None
-        
 
     def match(self):
         ''' Checks and returns if there is an item to match
@@ -227,10 +227,8 @@ class ProbsVector():
             None (NoneType): Not Matched
         '''
         if self.is_match():
-            self.conclusion = 'use'
             return self.activated
         else:
-            self.conclusion = 'not matched - need to resolve'
             return None
 
     def get_probs_in_range(self, p_min, p_max):
@@ -238,29 +236,14 @@ class ProbsVector():
         for n,p_ in enumerate(self.p):
             if p_min <= p_ < p_max:
                 r.append(n)
-        return r      
+        return r
 
-    @property
-    def conclusion_use(self):
-        if self.conclusion in ['match use', 'resolve use']:
-            return True
-        else:
-            return False  
-    
-    def apply_threshold(self):
+    def apply_thresholding(self):
         if self.is_match():
-            self.match()
+            return self.match()
         else:
-            self.resolve()
-        return self.conclusion
-
-    def conclude(self):
-        if self.is_match():
-            self.match()
-        else:
-            self.resolve()
-        return self.conclusion
-    
+            return self.resolve()
+        
     @property
     def names(self):
         return self.template_names
@@ -279,7 +262,10 @@ class ProbsVector():
         assert p_.ndim == 1
         self.p_ = p_
 
-    def add(self, name, p=None):
+    def add(self,
+            name: str | List[str],
+            p: float | List[float] = None,
+        ):
         """Adds name(s) and its probability(ies) to the vector
 
         Args:
@@ -307,7 +293,10 @@ class ProbsVector():
             self.add_single(name,p) 
         else: raise Exception(f"Not the right format name: {name}, p: {p}")
 
-    def add_single(self, name, p):
+    def add_single(self,
+                   name: str,
+                   p: float,
+        ):
         """Adds name ant its probability to the vector
 
         Args:
@@ -330,7 +319,7 @@ class ProbsVector():
         else: 
             return False
 
-    def pop(self, id):
+    def pop(self, id: int):
         ''' Pops single id '''
         assert isinstance(self.template_names, list)
         assert isinstance(self.p, np.ndarray)
@@ -347,24 +336,25 @@ class ProbsVector():
 
     def recompute_ids(self):
         pass
+    
+    def __eq__(self, other):
+        if np.allclose(self.p, other.p) and (self.names == other.names).all():
+            return True
+        else:
+            return False
 
 class EntropyProbsVector(ProbsVector):
-    # UNIFORM_ENTROPY_TH = 0.85
-    UNIFORM_ENTROPY_TH = 0
-    UNIFORM_ENTROPY_TH_LEN_1 = 1.1
-    NOISE_TH = 0.05
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.recompute_ids()
 
     def recompute_ids(self):
-        clear_th = self.UNIFORM_ENTROPY_TH or normalized_entropy(self.p_)  # fixed threshold or entropy
-        if len(self.p_) == 1: clear_th = self.UNIFORM_ENTROPY_TH_LEN_1 # exception for len=1
+        clear_th = UNIFORM_ENTROPY_TH or normalized_entropy(self.p_)  # fixed threshold or entropy
+        if len(self.p_) == 1: clear_th = UNIFORM_ENTROPY_TH_LEN_1 # exception for len=1
 
         dcross_ent = np.asarray(diagonal_cross_entropy(self.p_))
         clear_ids = np.where(dcross_ent < clear_th)[0].tolist()
-        unsure_ids = np.where(np.logical_and(dcross_ent >= clear_th, np.asarray(self.p_) > self.NOISE_TH))[0].tolist()
+        unsure_ids = np.where(np.logical_and(dcross_ent >= clear_th, np.asarray(self.p_) > NOISE_TH))[0].tolist()
 
         self._set_ids(clear_ids, unsure_ids)
 
