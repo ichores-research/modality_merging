@@ -11,13 +11,13 @@ from hri_msgs.msg import HRICommand as HRICommandMSG
 class MMNode(Node):
     def __init__(self, args=None):
         super().__init__('merge_modalities_node')
-        self.mm_publisher = self.create_publisher(HRICommandMSG, '/mm/solution', 5)
+        self.mm_publisher = self.create_publisher(HRICommandMSG, '/mm_solution', 5)
 
         qos = QoSProfile(depth=10, reliability=QoSReliabilityPolicy.BEST_EFFORT)
         for mod in args.topics:
             self.create_subscription(
                 HRICommandMSG,
-                f'/{mod}/hri_command',
+                f'/modality/{mod}',
                 partial(self.receive, mod),
                 qos_profile=qos)
         
@@ -35,7 +35,7 @@ class MMNode(Node):
         gesture_command = None
         nlp_command = None
         for mod, time, msg in self.received_messages:
-            if mod == "gg":
+            if mod == "gestures":
                 gesture_command = HriCommand.from_ros(msg) # choose the last received
             elif mod == "nlp":
                 nlp_command = HriCommand.from_ros(msg) # choose the last received
@@ -58,7 +58,7 @@ class MMNode(Node):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--topics", nargs="+", default=["gg", "nlp"])
+    parser.add_argument("--topics", nargs="+", default=["gestures", "nlp"]) # TODO: Can listen on single topic name in the future
     args, _ = parser.parse_known_args()
 
     rclpy.init()

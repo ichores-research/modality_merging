@@ -10,10 +10,7 @@ cd <ichores_ws>
 colcon build --symlink-install
 cd <ichores_ws>/merging_modalities/naive_merger
 pip install -e .
-
 ```
-
-- [ ] change to ROS1 or ZMQ bridge to Tiago?
 
 ## Usage:
 
@@ -21,7 +18,7 @@ pip install -e .
 source <ichores_ws>/install/setup.bash
 ros2 run naive_merger mm_node
 ```
-This sets listening `--topics` for inputs Hand outputs `/mm/solution`. Both input and output are format of type `HRICommand.msg` (see *hri_msgs*).
+This sets listening `--topics` for inputs Hand outputs `/mm_solution`. Both input and output are format of type `HRICommand.msg` (see *hri_msgs*).
 
 
 ## Notes
