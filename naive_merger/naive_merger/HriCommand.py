@@ -46,8 +46,8 @@ class HriCommand():
         return ret
     
     @classmethod
-    def from_ros(cls, msg, thresholding):
-        msg_dict = json.loads(msg.data)
+    def from_ros(cls, msg, thresholding="entropy"):
+        msg_dict = json.loads(msg.data[0])
 
         arity_names = []
         for k in msg_dict.keys():
@@ -99,7 +99,7 @@ class HriCommand():
     def to_ros(self):
         from hri_msgs.msg import HRICommand as HRICommandMSG # import is here to keep ROS independency
 
-        return HRICommandMSG(data=str(json.dump(self.to_dict())))
+        return HRICommandMSG(data=[str(json.dumps(self.to_dict()))])
     
     def __str__(self):
         s = ""

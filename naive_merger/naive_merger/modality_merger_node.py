@@ -42,6 +42,11 @@ class MMNode(Node):
 
         self.received_messages = [] # clean up received messages
 
+        if gesture_command is None:
+            return nlp_command.to_ros()
+        if nlp_command is None:
+            return gesture_command.to_ros()
+
         merged_command = gesture_command @ nlp_command
         return merged_command.to_ros()
 
