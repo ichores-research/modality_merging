@@ -140,7 +140,7 @@ class ProbsVector(ProbsVectorType):
         return False
 
     @property
-    def max(self):
+    def max(self) -> str:
         if self.empty: return None
         if self.discard_two_maxes_enabled:
             if self.discard_two_maxes(): return None
@@ -148,7 +148,7 @@ class ProbsVector(ProbsVectorType):
         return self.template_names[np.argmax(self.p)]
 
     @property
-    def max_prob(self):
+    def max_prob(self) -> float:
         if len(self.p) == 0: return None
         if self.discard_two_maxes_enabled:
             if self.discard_two_maxes(): return None  
@@ -156,7 +156,7 @@ class ProbsVector(ProbsVectorType):
         return np.max(self.p)
 
     @property
-    def max_id(self):    
+    def max_id(self) -> int:    
         if len(self.p) == 0: return None
         if self.discard_two_maxes_enabled:
             if self.discard_two_maxes(): return None          

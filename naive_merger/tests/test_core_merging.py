@@ -36,8 +36,8 @@ def test_core_merging_3():
         data_dict = {
             "action_probs": np.array([0.5, 0.3, 0.2]), 
             "object_probs": np.array([0.6, 0.1, 0.3]), 
-            "action": np.array(["pick", "pour", "grab"]), 
-            "object": np.array(["cube", "cup", "can"]), 
+            "action_names": np.array(["pick", "pour", "grab"]), 
+            "object_names": np.array(["cube", "cup", "can"]), 
         }, 
         thresholding = "entropy",
     )
@@ -46,8 +46,8 @@ def test_core_merging_3():
         data_dict = {
             "action_probs": np.array([0.5, 0.3, 0.2]), 
             "object_probs": np.array([0.6, 0.1, 0.3]), 
-            "action": np.array(["pick", "pour", "grab"]), 
-            "object": np.array(["cube", "cup", "can"]), 
+            "action_names": np.array(["pick", "pour", "grab"]), 
+            "object_names": np.array(["cube", "cup", "can"]), 
         }, 
         thresholding = "entropy",
     )
@@ -60,8 +60,8 @@ def test_hricommand_conversion():
         data_dict = {
             "action_probs": np.array([0.5, 0.3, 0.2]), 
             "object_probs": np.array([0.6, 0.1, 0.3]), 
-            "action": np.array(["pick", "pour", "grab"]), 
-            "object": np.array(["cube", "cup", "can"]), 
+            "action_names": np.array(["pick", "pour", "grab"]), 
+            "object_names": np.array(["cube", "cup", "can"]), 
         }, 
         thresholding="entropy",
     )
